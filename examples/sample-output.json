@@ -1,0 +1,78 @@
+[
+  {
+    "source": "find-a-tender",
+    "noticeId": "101112-2026",
+    "ocid": "ocds-h6vhtk-07905a",
+    "title": "Schools Microsoft Enterprise Licensing Agreement",
+    "description": "Newcastle City Council (NCC) is seeking the renewal of its current Microsoft Licencing Agreement for schools. NCC is seeking a new agreement with a single vendor to replace the existing expiring agreement.\nFurther competition will run via the CCS framework RM6068 Lot 3, via the OPEN tendering portal.",
+    "buyerName": "Newcastle City Council",
+    "country": "GB",
+    "cpvCodes": [
+      "72000000"
+    ],
+    "valueAmount": null,
+    "valueCurrency": null,
+    "publishedAt": "2026-10-26T14:55:55.000Z",
+    "deadline": "2026-11-19T12:00:00.000Z",
+    "procedureType": "Restricted procedure",
+    "noticeUrl": "https://www.find-tender.service.gov.uk/Notice/101112-2026",
+    "licence": "Contains public sector information licensed under the Open Government Licence v3.0. Licence: https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+  },
+  {
+    "source": "contracts-finder",
+    "noticeId": "65aa9325-6361-45fb-9ce8-72e6700f8cf8",
+    "ocid": "ocds-b5fd17-135a8df7-bfdf-48b2-bd77-4e023f140df1",
+    "title": "DPS1 1429 - Tenancy Tree Work",
+    "description": "DPS1 1429 - Tenancy Tree Work\n\nAdditional information: \nhttps://londonconstructionprogramme.co.uk/services/dynamic-purchasing-systems/",
+    "buyerName": "London Borough of Haringey",
+    "country": "GB",
+    "cpvCodes": [
+      "71000000"
+    ],
+    "valueAmount": 90000,
+    "valueCurrency": "GBP",
+    "publishedAt": "2026-10-23T15:58:07.000Z",
+    "deadline": "2026-11-10T16:55:18.000Z",
+    "procedureType": "Call-off from a dynamic purchasing system",
+    "noticeUrl": "https://www.contractsfinder.service.gov.uk/Notice/65aa9325-6361-45fb-9ce8-72e6700f8cf8",
+    "licence": "Contains public sector information licensed under the Open Government Licence v3.0. Licence: https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+  },
+  {
+    "source": "ted",
+    "noticeId": "745200-2026",
+    "ocid": null,
+    "title": "Germany – Industry specific software package – Newsproviderleistungen für Gas, Strom und LNG",
+    "description": "Kauf von Newsproviderleistungen im Bereich Gas, Strom und LNG für zwei Jahre mit der Option zur zweimaligen Verlängerung um jeweils 12 Monate.",
+    "buyerName": "Bundesnetzagentur",
+    "country": "DE",
+    "cpvCodes": [
+      "48100000"
+    ],
+    "valueAmount": null,
+    "valueCurrency": null,
+    "publishedAt": "2026-10-27",
+    "deadline": "2026-10-29",
+    "procedureType": "open",
+    "noticeUrl": "https://ted.europa.eu/en/notice/-/detail/745200-2026",
+    "licence": "TED notices © European Union, 1998-2026, reused under the Commission reuse policy; normalised by this Actor. Source: https://ted.europa.eu"
+  },
+  {
+    "source": "ted",
+    "noticeId": "745122-2026",
+    "ocid": null,
+    "title": "Ireland – Transport services (excl. Waste transport) – Invitation to Tender for Transport Provision and Taxi Service",
+    "description": "Empower is currently seeking tender submissions for transport provision and taxi services, which will facilitate engagement of service users across Fingal, through the delivery of training supports and social activities, and meaningful work experience opportunities. The overall outcome of training supports will provide these individuals with increased confidence; a firm sense of direction; industry specific certification; improved job-seeking skills, which will increase the likelihood of being placed in employment and retaining such placement. Participation in social, cultural and economic activities will improve wellbeing and quality of life",
+    "buyerName": "Empower CLG",
+    "country": "IE",
+    "cpvCodes": [
+      "60000000"
+    ],
+    "valueAmount": 160000,
+    "valueCurrency": "EUR",
+    "publishedAt": "2026-10-27",
+    "deadline": "2026-11-23",
+    "procedureType": "open",
+    "noticeUrl": "https://ted.europa.eu/en/notice/-/detail/745122-2026",
+    "licence": "TED notices © European Union, 1998-2026, reused under the Commission reuse policy; normalised by this Actor. Source: https://ted.europa.eu"
+  }
+]
