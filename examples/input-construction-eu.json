@@ -1,0 +1,9 @@
+{
+  "cpvCodes": ["45210000", "45300000", "71240000"],
+  "countries": ["DE", "FR", "IE", "NL"],
+  "publishedSince": "3 days",
+  "minValue": 500000,
+  "includeNoValue": true,
+  "onlyNew": true,
+  "maxNotices": 200
+}
