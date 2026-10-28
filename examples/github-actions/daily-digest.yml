@@ -1,0 +1,107 @@
+# Daily digest of NEW UK and EU tender notices with the Apify Actor lineagersiui/public-tender-feed.
+# Copy to .github/workflows/daily-digest.yml in YOUR repository.
+# Needs:
+#   - repository secret APIFY_TOKEN;
+#   - optional repository secret SLACK_WEBHOOK_URL (a Slack incoming webhook); without it, nothing is posted;
+#   - a file tender-input.json in the repository root, like examples/input-it-services-uk.json.
+#     Keep "onlyNew": true so each day returns only notices not returned before.
+# The run is started, then polled, because a run can fetch for up to about 9 minutes and the
+# synchronous endpoint waits only about 5. The day's notices are uploaded as the artifact "tender-digest" (CSV + JSON).
+# The job FAILS if the Actor run fails, if the run has no SUMMARY, or if no requested source worked
+# (all stopped early, or TED could not use the keywords). A source that stopped early while others
+# worked is shown as a warning and as an "(incomplete: ...)" line in the Slack message.
+# Prefer a dedicated, scoped APIFY_TOKEN (see the README).
+name: tender-digest
+on:
+  schedule:
+    - cron: "15 6 * * 1-5"   # weekdays 06:15 UTC
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      INPUT_FILE: tender-input.json
+      MAX_LINES: "25"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Fetch new notices and post the digest
+        run: |
+          node --input-type=module - <<'EOF'
+          import fs from 'node:fs';
+          const API = 'https://api.apify.com/v2';
+          const ACTOR = 'lineagersiui~public-tender-feed';
+          const die = (msg) => { console.log(`::error::${msg}`); process.exit(1); };
+          const token = process.env.APIFY_TOKEN;
+          if (!token) die('Repository secret APIFY_TOKEN is not set.');
+          const input = JSON.parse(fs.readFileSync(process.env.INPUT_FILE, 'utf8'));
+          if (!input.keywords?.length && !input.cpvCodes?.length && !input.countries?.length) die('The input has no keywords, cpvCodes or countries (that would only run the free demo).');
+          if (input.onlyNew !== true) console.log('::warning::"onlyNew" is not true: the digest can repeat notices from earlier days, and they are billed again.');
+          const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+          async function api(path, init = {}, as = 'json') {
+            const res = await fetch(API + path, { ...init, headers });
+            if (!res.ok) die(`${init.method ?? 'GET'} ${path.split('?')[0]} returned HTTP ${res.status}`);
+            return as === 'json' ? res.json() : res.text();
+          }
+          let run = (await api(`/acts/${ACTOR}/runs`, { method: 'POST', body: JSON.stringify(input) })).data;
+          console.log(`Started run ${run.id}`);
+          fs.writeFileSync('apify-run-id', run.id);   // used by the abort step if this job is cancelled
+          while (!['SUCCEEDED', 'FAILED', 'ABORTED', 'TIMED-OUT'].includes(run.status)) {
+            run = (await api(`/actor-runs/${run.id}?waitForFinish=60`)).data;
+          }
+          if (run.status !== 'SUCCEEDED') die(`Actor run ${run.id} ended ${run.status}. See its log in Apify Console.`);
+          const ds = `/datasets/${run.defaultDatasetId}/items?clean=true`;
+          const items = await api(`${ds}&format=json`);
+          const csv = await api(`${ds}&format=csv&fields=publishedAt,source,title,buyerName,country,valueAmount,valueCurrency,deadline,cpvCodes,noticeUrl,licence`, {}, 'text');
+          fs.mkdirSync('digest', { recursive: true });
+          fs.writeFileSync('digest/notices.json', JSON.stringify(items, null, 2));
+          fs.writeFileSync('digest/notices.csv', csv);
+          const sres = await fetch(`${API}/key-value-stores/${run.defaultKeyValueStoreId}/records/SUMMARY`, { headers });
+          const summary = sres.ok ? await sres.json() : null;
+          if (!summary) die('The run has no SUMMARY record, so it is unknown whether any source worked.');
+          console.log(`Returned ${summary.returned}, duplicates removed ${summary.duplicatesRemoved}, already seen ${summary.alreadySeenSkipped}.`);
+          const requested = Object.entries(summary.sourceStatus ?? {}).filter(([, s]) => s.status !== 'not_requested');
+          const working = requested.filter(([, s]) => s.status === 'ok' || s.status === 'page_cap_reached');
+          const stopped = requested.filter(([, s]) => s.status !== 'ok' && s.status !== 'page_cap_reached');
+          for (const [name, s] of stopped) console.log(`::warning::Source ${name} stopped early: ${s.status}. Today's list may be incomplete.`);
+          const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          const money = (n) => (n.valueAmount === null ? 'no value published' : `${n.valueAmount.toLocaleString('en-GB')} ${n.valueCurrency ?? ''}`.trim());
+          const max = Number(process.env.MAX_LINES) || 25;
+          const lines = items.slice(0, max).map((n) => `• <${n.noticeUrl}|${esc(n.title)}>\n   ${esc(n.buyerName)} (${n.country ?? '?'}), ${money(n)}, deadline ${n.deadline ? n.deadline.slice(0, 10) : 'not given'}`);
+          if (items.length > max) lines.push(`…and ${items.length - max} more in the CSV artifact of this workflow run.`);
+          const sources = [...new Set(items.map((n) => n.licence))].map(esc);
+          const incomplete = stopped.length ? `\n(incomplete: ${stopped.map(([name, s]) => `${name} stopped: ${s.status}`).join('; ')})` : '';
+          const noSource = !working.length;
+          const text = noSource
+            ? `*Tender digest failed:* no source could be read today.${incomplete}`
+            : items.length
+              ? `*${items.length} new tender notice(s)*\n${lines.join('\n')}${incomplete}\n\n_${sources.join(' ')}_`
+              : `No new tender notices today.${incomplete}`;
+          console.log(text);
+          if (process.env.SLACK_WEBHOOK_URL) {
+            const res = await fetch(process.env.SLACK_WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+            if (!res.ok) die(`Slack webhook returned HTTP ${res.status}.`);
+          }
+          if (noSource) die('No requested source worked in this run (all stopped early, or TED could not use the keywords).');
+          EOF
+      - name: Abort the Apify run if this job was cancelled or timed out
+        if: cancelled()
+        run: |
+          if [ -f apify-run-id ]; then
+            curl -sS -X POST -o /dev/null -H "Authorization: Bearer $APIFY_TOKEN" \
+              "https://api.apify.com/v2/actor-runs/$(cat apify-run-id)/abort"
+          fi
+      - name: Upload digest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tender-digest
+          path: digest/
+          if-no-files-found: ignore
